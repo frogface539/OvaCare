@@ -1,0 +1,16 @@
+# Backend
+lime
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.8.0
+
+# Shared
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.4.0
+joblib>=1.3.0
+
+# Frontend
+streamlit>=1.35.0
+matplotlib>=3.8.0
+requests>=2.32.0
