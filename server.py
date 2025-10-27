@@ -170,6 +170,14 @@ def _feature_importance_map(top_k: int = 8) -> Dict[str, float]:
             imp[str(n)] = round(float(v / total * 100.0), 1)
     return imp
 
+def clean_ai_response(text):
+    # Remove lines with "Let me think", "Wait", "I'll proceed", etc.
+    lines = text.split('\n')
+    filtered = []
+    for line in lines:
+        if not re.search(r'(let me|wait|maybe|i need to|i\'ll proceed|now, considering|now, let me|starting with|next,|for each category|overall,|here’s a breakdown)', line, re.IGNORECASE):
+            filtered.append(line)
+    return '\n'.join(filtered)
 
 # ----------------------------------------------------------------------------
 # Routes
@@ -292,3 +300,30 @@ def _strip_think(text: str) -> str:
     text = re.sub(r"(?is)^(?:\s*(thoughts?|reasoning)\s*:\s*.*?)(?:\n\s*\n|$)", "", text)
     # Trim leftover whitespace
     return text.strip()
+
+
+@app.post("/ai-suggest")
+async def ai_suggest(request: Request):
+    try:
+        data = await request.json()
+        prompt = data.get("prompt")
+        print("Prompt received:", prompt)  # Debug print
+        groq_api_url = "https://api.groq.com/openai/v1/chat/completions"
+        groq_api_key = "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"
+        payload = {
+            "model": "qwen/qwen3-32b",
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        headers = {
+            "Authorization": f"Bearer {groq_api_key}",
+            "Content-Type": "application/json"
+        }
+        response = requests.post(groq_api_url, json=payload, headers=headers)
+        print("Groq response status:", response.status_code)  # Debug print
+        print("Groq response body:", response.text)  # Debug print
+        response.raise_for_status()
+        suggestion = clean_ai_response(response.json()["choices"][0]["message"]["content"])
+        return {"suggestion": suggestion}
+    except Exception as e:
+        print("Error in /ai-suggest:", e)  # Debug print
+        return JSONResponse(status_code=500, content={"error": str(e)})

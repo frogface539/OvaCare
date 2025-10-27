@@ -61,6 +61,133 @@
             line-height: 1.2;
         }
 
+        /* Fitness Tracker Card */
+        #fitness .card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e0c3fc 100%);
+            border-radius: 24px;
+            box-shadow: 0 4px 24px rgba(142,68,173,0.10);
+            padding: 48px 40px;
+            max-width: 1000px;
+            margin: 40px auto;
+            animation: fadeIn 0.7s;
+            width: 95%
+        }
+        #fitness h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: #8e44ad;
+            margin-bottom: 24px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        #fitnessForm label {
+            display: block;
+            margin: 18px 0 6px 0;
+            font-weight: 500;
+            color: #6c3483;
+            font-size: 1.08rem;
+        }
+        #fitnessForm input[type="number"] {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #d2b4de;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #f4f6fb;
+            margin-bottom: 8px;
+            transition: border-color 0.2s;
+        }
+        #fitnessForm input[type="number"]:focus {
+            border-color: #8e44ad;
+            outline: none;
+        }
+        #fitnessForm .btn {
+            display: block;
+            width: 100%;
+            margin: 24px 0 0 0;
+            padding: 12px 0;
+            background: linear-gradient(90deg, #8e44ad 0%, #6c3483 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(142,68,173,0.10);
+            transition: background 0.2s, transform 0.2s;
+        }
+        #fitnessForm .btn:hover {
+            background: linear-gradient(90deg, #6c3483 0%, #8e44ad 100%);
+            transform: scale(1.03);
+        }
+        #fitnessSummary {
+            max-width: 950px; 
+            margin: 32px auto 0 auto;
+            width: 100%;
+            background: #f8f4fc;
+            border-radius: 12px;
+            padding: 24px 20px;
+            box-shadow: 0 2px 8px rgba(142,68,173,0.07);
+            font-size: 1.08rem;
+            color: #4a235a;
+            animation: fadeIn 0.7s;
+        }
+        #fitnessSummary h3 {
+            color: #8e44ad;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        #fitnessSummary ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 12px 0;
+        }
+        #fitnessSummary ul li {
+            padding: 6px 0;
+            border-bottom: 1px solid #e0c3fc;
+            font-size: 1rem;
+        }
+        #fitnessSummary ul li:last-child {
+            border-bottom: none;
+        }
+        #fitnessSummary p {
+            text-align: center;
+            font-weight: 500;
+            color: #6c3483;
+            margin-top: 10px;
+            font-size: 1.08rem;
+        }
+        .ai-markdown {
+            margin-top: 16px;
+            background: #f8f4fc;
+            border-radius: 12px;
+            padding: 18px 16px;
+            box-shadow: 0 2px 8px rgba(142,68,173,0.07);
+            font-size: 1.08rem;
+            color: #4a235a;
+            line-height: 1.7;
+        }
+        .ai-markdown h3, .ai-markdown h4 {
+            color: #8e44ad;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            font-family: 'Playfair Display', serif;
+        }
+        .ai-markdown ul {
+            margin: 12px 0 12px 24px;
+            padding: 0;
+        }
+        .ai-markdown li {
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        .ai-markdown strong {
+            color: #6c3483;
+        }
+        .ai-markdown p {
+            margin: 10px 0;
+        }
         /* Login Page Styles */
         .login-container {
             display: flex;
@@ -1860,6 +1987,7 @@
                             <li><button class="nav-btn active" data-section="landing">Home</button></li>
                             <li><button class="nav-btn" data-section="prediction">Risk Prediction</button></li>
                             <li><button class="nav-btn" data-section="tracker">Period Tracker</button></li>
+                            <li><button class="nav-btn" data-section="fitness">Daily Fitness Tracker</button></li>
                             <li><button class="nav-btn" data-section="doctors">Doctor Contact</button></li>
                         </ul>
                     </nav>
@@ -2505,7 +2633,24 @@
                         </div>
                     </div>
                 </section>
-
+                <!-- Fitness Tracker Section -->
+                <section id="fitness" class="section">
+                    <div class="card">
+                        <h2>Daily Fitness Tracker</h2>
+                        <form id="fitnessForm">
+                            <label>Steps walked today:</label>
+                            <input type="number" id="stepsInput" min="0" required>
+                            <label>Minutes exercised:</label>
+                            <input type="number" id="exerciseInput" min="0" required>
+                            <label>Water intake (liters):</label>
+                            <input type="number" id="waterInput" min="0" step="0.1" required>
+                            <label>Sleep hours:</label>
+                            <input type="number" id="sleepInput" min="0" step="0.1" required>
+                            <button type="submit" class="btn">Save</button>
+                        </form>
+                        <div id="fitnessSummary"></div>
+                    </div>
+                </section>
                 <!-- Doctor Contact Section -->
                 <section id="doctors" class="section">
                     <div class="card">
@@ -2515,6 +2660,7 @@
                         </div>
                     </div>
                 </section>
+
             </div>
         </main>
     </div>
@@ -2524,7 +2670,49 @@
     <button id="chatbotFab" class="chatbot-fab">
         <i class="fas fa-comment-dots"></i>
     </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
+
+        document.getElementById('fitnessForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const steps = document.getElementById('stepsInput').value;
+            const exercise = document.getElementById('exerciseInput').value;
+            const water = document.getElementById('waterInput').value;
+            const sleep = document.getElementById('sleepInput').value;
+
+            document.getElementById('fitnessSummary').innerHTML = `
+                <h3>Today's Summary</h3>
+                <ul>
+                    <li>Steps: ${steps}</li>
+                    <li>Exercise: ${exercise} min</li>
+                    <li>Water: ${water} L</li>
+                    <li>Sleep: ${sleep} hrs</li>
+                </ul>
+                <p>Great job! Keep it up!</p>
+                <div id="aiSuggestion" style="margin-top:18px;"></div>
+            `;
+
+            // Fetch AI suggestion from backend
+            const aiSuggestionDiv = document.getElementById('aiSuggestion');
+            aiSuggestionDiv.innerHTML = `<span style="color:#6c3483;">Loading AI suggestions...</span>`;
+            try {
+                const response = await fetch('/ai-suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: `Based on these daily values: steps: ${steps}, exercise: ${exercise} min, water: ${water} L, sleep: ${sleep} hrs, suggest improvements and healthy habits for a woman. Do NOT include your reasoning or thinking process. Only provide a concise, structured list of recommendations and improvements for each category (steps, exercise, water, sleep). Do not explain your thought process or assumptions.`
+                })
+            });
+                
+                const data = await response.json();
+                // Render markdown beautifully
+                aiSuggestionDiv.innerHTML = `<strong style="color:#8e44ad;">AI Suggestion:</strong>
+                    <div class="ai-markdown">${marked.parse(data.suggestion)}</div>`;
+            } catch (err) {
+                aiSuggestionDiv.innerHTML = `<span style="color:#e74c3c;">Could not fetch AI suggestions. Please try again.</span>`;
+            }
+        });
         // Period Tracker Class
         class Period {
             constructor(startDateStr, endDateStr, symptoms = []) {
@@ -2786,6 +2974,7 @@
                 toast.classList.remove('show');
             }, duration);
         }
+        
         // Floating Chatbot Button functionality
         // Floating Chatbot Button functionality
         const chatbotFab = document.getElementById('chatbotFab');
