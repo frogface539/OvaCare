@@ -11,9 +11,6 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-# ----------------------------------------------------------------------------
-# Config
-# ----------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_PATH = BASE_DIR / "frontend.html"
 
@@ -23,28 +20,21 @@ ENCODERS_PATH = MODELS_DIR / "encoders.pkl"
 FEATURE_NAMES_PATH = MODELS_DIR / "feature_names.pkl"
 SCALER_PATH = MODELS_DIR / "scaler.pkl"
 
-# Match training numeric columns
 NUM_COLS = [
     "Age", "Height(cm)", "Weight(kg)", "BMI", "Cycle Length(days)", "Marriage Status (Yrs)",
     "No. of Abortions", "Exercise (days/week)", "Alcohol (drinks/week)", "Sleep (hours/day)",
     "Stress Level (1-10)", "Water Intake (liters/day)", "Fast Food (meals/week)", "Coffee/Tea (cups/day)"
 ]
 
-# ----------------------------------------------------------------------------
-# App
-# ----------------------------------------------------------------------------
 app = FastAPI(title="OVACARE Gateway", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten for production
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ----------------------------------------------------------------------------
-# Artifacts
-# ----------------------------------------------------------------------------
 model = None
 encoders: Optional[Dict[str, Any]] = None
 feature_names: Optional[List[str]] = None
@@ -80,9 +70,6 @@ def load_artifacts():
         scaler = _load(SCALER_PATH)
 
 
-# ----------------------------------------------------------------------------
-# Helpers (mirrors api/main.py behavior)
-# ----------------------------------------------------------------------------
 def _ensure_bmi(row: Dict[str, Any]) -> Dict[str, Any]:
     if "BMI" not in row and ("Height(cm)" in row and "Weight(kg)" in row):
         try:
@@ -153,7 +140,6 @@ def _coerce_numeric_fields(row: Dict[str, Any]) -> Dict[str, Any]:
             try:
                 out[c] = float(out[c])
             except Exception:
-                # leave as-is; will be filled/ignored safely
                 pass
     return out
 
@@ -171,7 +157,6 @@ def _feature_importance_map(top_k: int = 8) -> Dict[str, float]:
     return imp
 
 def clean_ai_response(text):
-    # Remove lines with "Let me think", "Wait", "I'll proceed", etc.
     lines = text.split('\n')
     filtered = []
     for line in lines:
@@ -179,9 +164,6 @@ def clean_ai_response(text):
             filtered.append(line)
     return '\n'.join(filtered)
 
-# ----------------------------------------------------------------------------
-# Routes
-# ----------------------------------------------------------------------------
 @app.get("/")
 def index():
     if not FRONTEND_PATH.exists():
@@ -222,8 +204,7 @@ async def predict_handler(request: Request):
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
 
 
-# Simple /chat wrapper that matches frontend.html expectations
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 GROQ_MODEL = os.environ.get("GROQ_MODEL", "qwen/qwen3-32b")
 SYSTEM_PROMPT = (
     "You are an expert assistant specialized in PCOS (Polycystic Ovary Syndrome). "
@@ -244,7 +225,6 @@ async def chat_handler(request: Request):
             raise HTTPException(status_code=400, detail="message is required")
 
         if not GROQ_API_KEY:
-            # Graceful message for local dev without a key
             return JSONResponse({
                 "response": (
                     "Chat backend is not configured. Set GROQ_API_KEY to enable responses, "
@@ -279,26 +259,17 @@ async def chat_handler(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Chat failed: {e}")
 
-
-# Optional: health endpoint
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
-# ----------------------------------------------------------------------------
-# Utilities
-# ----------------------------------------------------------------------------
 def _strip_think(text: str) -> str:
     """Remove chain-of-thought blocks such as <think>...</think> and common variants."""
     if not text:
         return text
-    # Remove <think>...</think> blocks (case-insensitive, multiline)
     text = re.sub(r"(?is)<\s*think\s*>.*?<\s*/\s*think\s*>", "", text)
-    # Remove fenced code blocks labeled thinking/reasoning
     text = re.sub(r"(?is)```\s*(thought|thinking|reasoning)[\s\S]*?```", "", text)
-    # Remove leading 'Thought:'/'Reasoning:' paragraphs up to first blank line
     text = re.sub(r"(?is)^(?:\s*(thoughts?|reasoning)\s*:\s*.*?)(?:\n\s*\n|$)", "", text)
-    # Trim leftover whitespace
     return text.strip()
 
 
@@ -307,9 +278,9 @@ async def ai_suggest(request: Request):
     try:
         data = await request.json()
         prompt = data.get("prompt")
-        print("Prompt received:", prompt)  # Debug print
+        print("Prompt received:", prompt) 
         groq_api_url = "https://api.groq.com/openai/v1/chat/completions"
-        groq_api_key = "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"
+        groq_api_key = "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"
         payload = {
             "model": "qwen/qwen3-32b",
             "messages": [{"role": "user", "content": prompt}]
@@ -319,11 +290,11 @@ async def ai_suggest(request: Request):
             "Content-Type": "application/json"
         }
         response = requests.post(groq_api_url, json=payload, headers=headers)
-        print("Groq response status:", response.status_code)  # Debug print
-        print("Groq response body:", response.text)  # Debug print
+        print("Groq response status:", response.status_code)  
+        print("Groq response body:", response.text)  
         response.raise_for_status()
         suggestion = clean_ai_response(response.json()["choices"][0]["message"]["content"])
         return {"suggestion": suggestion}
     except Exception as e:
-        print("Error in /ai-suggest:", e)  # Debug print
+        print("Error in /ai-suggest:", e) 
         return JSONResponse(status_code=500, content={"error": str(e)})
