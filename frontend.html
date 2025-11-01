@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OvaCare - Women's Health Assistance Portal</title>
+    <title>OVACARE - Women's Health Assistance Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
             --primary-color: #8e44ad;
@@ -1965,6 +1966,68 @@
         .signup-cta-text a { color: var(--primary-color); text-decoration: underline; }
         .forgot-cta-text { margin-top: 0.6rem; text-align: center; color: var(--light-text); font-size: 0.95rem; }
         .forgot-cta-text a { color: var(--primary-color); text-decoration: underline; }
+
+        /* Fitness Tracker – layout polish */
+        #fitness .fitness-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem 1.25rem;
+        }
+        @media (max-width: 980px) {
+            #fitness .fitness-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 640px) {
+            #fitness .fitness-grid { grid-template-columns: 1fr; }
+        }
+        #fitness .form-group {
+            background: #faf7fd;
+            border: 1px solid #efe7f7;
+            border-radius: 12px;
+            padding: 12px;
+        }
+        #fitness .form-group label { color: #6c3483; font-weight: 600; margin-bottom: 6px; display: block; }
+        #fitness .form-control, #fitness select, #fitness textarea {
+            background: #fff;
+            border: 1px solid #e9d9f5;
+            border-radius: 10px;
+            padding: 10px 12px;
+            outline: none;
+            width: 100%;
+        }
+        #fitness .form-control:focus, #fitness select:focus, #fitness textarea:focus {
+            border-color: #c6a3e6;
+            box-shadow: 0 0 0 3px rgba(142,68,173,0.08);
+        }
+        #fitness .form-divider {
+            grid-column: 1 / -1;
+            display: flex; align-items: center; gap: 10px;
+            margin-top: 0.25rem; margin-bottom: 0.25rem;
+        }
+        #fitness .form-divider .title {
+            color: #6c3483; font-weight: 800; letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+        #fitness .form-divider .rule { flex: 1; height: 1px; background: linear-gradient(90deg, #e8dcf5, transparent); }
+        #fitness .symptom-input { display: flex; flex-wrap: wrap; gap: 8px; }
+        #fitness .symptom-input label {
+            background: #fff;
+            border: 1px solid #e9d9f5; border-radius: 999px; padding: 8px 12px;
+            display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #5a4b67;
+        }
+        #fitness .symptom-input input { accent-color: #8e44ad; }
+        #fitness .mini-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            border: 1px solid #e0d6ee; color: #6c3483; background: #fff;
+            padding: 6px 10px; border-radius: 20px; font-size: 0.85rem; cursor: pointer;
+        }
+        #fitness .mini-btn:hover { background: #f8f2ff; }
+        #fitness .field-actions { margin-top: 0.4rem; }
+        #fitness .prediction-card { border: 1px solid #efe7f7; }
+        /* Center the date card in the fitness grid */
+        #fitness .form-group--date { grid-column: 2; justify-self: center; max-width: 420px; width: 100%; }
+        @media (max-width: 980px) {
+            #fitness .form-group--date { grid-column: 1 / -1; justify-self: stretch; max-width: none; }
+        }
     </style>
 </head>
 <body>
@@ -1973,7 +2036,7 @@
         <div class="login-card">
             <div class="login-logo">
                 <span>🌸</span>
-                <span>OvaCare</span>
+                <span>OVACARE</span>
             </div>
             <form class="login-form" id="loginForm">
                 <div class="form-group">
@@ -2080,7 +2143,7 @@
                 <!-- Landing Page Section -->
                 <section id="landing" class="section active">
                     <div class="landing-hero">
-                        <h1>Welcome to OvaCare</h1>
+                        <h1>Welcome to OVACARE</h1>
                         <p>Your comprehensive resource for PCOS information, risk assessment, period tracking, and finding trusted healthcare providers.</p>
                     </div>
                     
@@ -2564,7 +2627,7 @@
                                 <div class="risk-actions">
                                     <button class="btn btn-cta" id="contactDoctorBtn">
                                         <i class="fas fa-user-md"></i>
-                                        Contact a Doctor
+                                        Connect to a Doctor
                                     </button>
                                 </div>
                             </div>
@@ -2585,7 +2648,6 @@
                             <button class="tracker-tab active" data-tab="dashboard">Dashboard</button>
                             <button class="tracker-tab" data-tab="add-period">Add Period</button>
                             <button class="tracker-tab" data-tab="history">History</button>
-                            <button class="tracker-tab" data-tab="visualization">Visualization</button>
                         </div>
                         
                         <!-- Dashboard Tab -->
@@ -2670,12 +2732,7 @@
                             </div>
                         </div>
                         
-                        <!-- Visualization Tab -->
-                        <div class="tracker-content" id="visualization">
-                            <div class="cycle-chart-container">
-                                <canvas id="cycleChart"></canvas>
-                            </div>
-                        </div>
+                        
                     </div>
                 </section>
 
@@ -2712,19 +2769,97 @@
                 <!-- Fitness Tracker Section -->
                 <section id="fitness" class="section">
                     <div class="card">
-                        <h2>Daily Fitness Tracker</h2>
+                        <h2>Daily Fitness & Wellbeing</h2>
                         <form id="fitnessForm">
-                            <label>Steps walked today:</label>
-                            <input type="number" id="stepsInput" min="0" required>
-                            <label>Minutes exercised:</label>
-                            <input type="number" id="exerciseInput" min="0" required>
-                            <label>Water intake (liters):</label>
-                            <input type="number" id="waterInput" min="0" step="0.1" required>
-                            <label>Sleep hours:</label>
-                            <input type="number" id="sleepInput" min="0" step="0.1" required>
-                            <button type="submit" class="btn">Save</button>
+                            <div class="form-grid fitness-grid">
+                                <div class="form-group form-group--date">
+                                    <label for="fitnessDate">Date</label>
+                                    <input type="date" id="fitnessDate" class="form-control" required>
+                                    <div class="field-actions"><button type="button" class="mini-btn" id="todayDateBtn">Today</button></div>
+                                </div>
+
+                                <div class="form-divider"><span class="title">Activity</span><span class="rule"></span></div>
+                                <div class="form-group">
+                                    <label for="stepsInput">Steps</label>
+                                    <input type="number" id="stepsInput" class="form-control" min="0" placeholder="e.g., 6000">
+                                </div>
+                                <div class="form-group">
+                                    <label for="exerciseInput">Exercise (minutes)</label>
+                                    <input type="number" id="exerciseInput" class="form-control" min="0" placeholder="e.g., 30">
+                                </div>
+                                <div class="form-group">
+                                    <label for="weightInput">Weight (kg)</label>
+                                    <input type="number" id="weightInput" class="form-control" min="0" step="0.1" placeholder="e.g., 68.2">
+                                </div>
+
+                                <div class="form-divider"><span class="title">Hydration & Sleep</span><span class="rule"></span></div>
+                                <div class="form-group">
+                                    <label for="waterInput">Water (liters)</label>
+                                    <input type="number" id="waterInput" class="form-control" min="0" step="0.1" placeholder="e.g., 2.0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sleepInput">Sleep (hours)</label>
+                                    <input type="number" id="sleepInput" class="form-control" min="0" step="0.1" placeholder="e.g., 7.5">
+                                </div>
+                                <div class="form-group">
+                                    <label for="stressInput">Stress Level (1-10)</label>
+                                    <input type="number" id="stressInput" class="form-control" min="1" max="10" placeholder="e.g., 5">
+                                </div>
+
+                                <div class="form-divider"><span class="title">Menstruation & Mood</span><span class="rule"></span></div>
+                                <div class="form-group">
+                                    <label for="flowSelect">Flow Level</label>
+                                    <select id="flowSelect" class="form-control">
+                                        <option value="">None</option>
+                                        <option value="light">Light</option>
+                                        <option value="moderate">Moderate</option>
+                                        <option value="heavy">Heavy</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="painInput">Pain Level (0-10)</label>
+                                    <input type="number" id="painInput" class="form-control" min="0" max="10" placeholder="e.g., 3">
+                                </div>
+                                <div class="form-group">
+                                    <label for="moodSelect">Mood</label>
+                                    <select id="moodSelect" class="form-control">
+                                        <option value="">-- Select --</option>
+                                        <option value="calm">Calm</option>
+                                        <option value="energetic">Energetic</option>
+                                        <option value="anxious">Anxious</option>
+                                        <option value="moody">Moody</option>
+                                        <option value="low">Low</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-divider"><span class="title">Symptoms</span><span class="rule"></span></div>
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label>Symptoms</label>
+                                    <div class="symptom-input" style="margin-top:0.25rem;">
+                                        <label><input type="checkbox" id="crampsChk"> Cramps</label>
+                                        <label><input type="checkbox" id="acneChk"> Acne</label>
+                                        <label><input type="checkbox" id="bloatingChk"> Bloating</label>
+                                        <label><input type="checkbox" id="headachesChk"> Headaches</label>
+                                        <label><input type="checkbox" id="cravingsChk"> Cravings</label>
+                                        <label><input type="checkbox" id="fatigueChk"> Fatigue</label>
+                                    </div>
+                                </div>
+
+                                <div class="form-divider"><span class="title">Medications & Notes</span><span class="rule"></span></div>
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label for="medicationsInput">Medications / Supplements (comma-separated)</label>
+                                    <input type="text" id="medicationsInput" class="form-control" placeholder="e.g., Metformin, Inositol">
+                                </div>
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label for="notesInput">Notes</label>
+                                    <textarea id="notesInput" class="form-control" rows="3" placeholder="Anything notable today..."></textarea>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn" style="margin-top:0.5rem;">Save Day</button>
                         </form>
-                        <div id="fitnessSummary"></div>
+                        <div id="fitnessSummary" class="prediction-card" style="margin-top:1rem;"></div>
+                        <div id="aiSuggestionBox" class="prediction-card" style="margin-top:1rem;"></div>
+                        <div class="period-list" id="fitnessHistory" style="margin-top:1rem;"></div>
                     </div>
                 </section>
                 <!-- Doctor Contact Section -->
@@ -2824,50 +2959,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-
-        document.getElementById('fitnessForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const steps = document.getElementById('stepsInput').value;
-            const exercise = document.getElementById('exerciseInput').value;
-            const water = document.getElementById('waterInput').value;
-            const sleep = document.getElementById('sleepInput').value;
-
-            document.getElementById('fitnessSummary').innerHTML = `
-                <h3>Today's Summary</h3>
-                <ul>
-                    <li>Steps: ${steps}</li>
-                    <li>Exercise: ${exercise} min</li>
-                    <li>Water: ${water} L</li>
-                    <li>Sleep: ${sleep} hrs</li>
-                </ul>
-                <p>Great job! Keep it up!</p>
-                <div id="aiSuggestion" style="margin-top:18px;"></div>
-            `;
-
-            // Fetch AI suggestion from backend
-            const aiSuggestionDiv = document.getElementById('aiSuggestion');
-            aiSuggestionDiv.innerHTML = `<span style="color:#6c3483;">Loading AI suggestions...</span>`;
-            try {
-               const token = localStorage.getItem('token');
-               const response = await fetch('/ai-suggest', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                },
-                body: JSON.stringify({
-                    prompt: `Based on these daily values: steps: ${steps}, exercise: ${exercise} min, water: ${water} L, sleep: ${sleep} hrs, suggest improvements and healthy habits for a woman. Do NOT include your reasoning or thinking process. Only provide a concise, structured list of recommendations and improvements for each category (steps, exercise, water, sleep). Do not explain your thought process or assumptions.`
-                })
-            });
-                
-                const data = await response.json();
-                // Render markdown beautifully
-                aiSuggestionDiv.innerHTML = `<strong style="color:#8e44ad;">AI Suggestion:</strong>
-                    <div class="ai-markdown">${marked.parse(data.suggestion)}</div>`;
-            } catch (err) {
-                aiSuggestionDiv.innerHTML = `<span style="color:#e74c3c;">Could not fetch AI suggestions. Please try again.</span>`;
-            }
-        });
         // Period Tracker Class
         class Period {
             constructor(startDateStr, endDateStr, symptoms = []) {
@@ -3007,9 +3098,8 @@
         }
 
         // Initialize the period tracker
-        const periodTracker = new PeriodTracker();
-        let cycleChart = null;
-        let riskChart = null;
+    const periodTracker = new PeriodTracker();
+    let riskChart = null;
 
         // Login & Signup functionality
         const loginPage = document.getElementById('loginPage');
@@ -3557,7 +3647,6 @@
                     setTimeout(() => {
                         updateDashboard();
                         renderPeriodHistory();
-                        updateVisualization();
                     }, 100);
                 }
             });
@@ -3834,6 +3923,10 @@
             }
         });
 
+        // Keep last prediction and inputs to forward to doctor
+        let lastPredictionInputs = null;
+        let lastPredictionResult = null;
+
         submitBtn.addEventListener('click', async () => {
             if (validateStep(currentStep)) {
                 const formData = collectFormData();
@@ -3853,6 +3946,10 @@
                     
                     const data = await response.json();
                     
+                    // Stash context for connect-to-doctor flow
+                    lastPredictionInputs = formData;
+                    lastPredictionResult = data;
+
                     // Display results
                     displayRiskResults(data);
                 } catch (error) {
@@ -4091,14 +4188,28 @@
             });
         }
 
-        // Contact Doctor button
-        document.getElementById('contactDoctorBtn').addEventListener('click', () => {
-            // Navigate to doctors section
-            navButtons.forEach(btn => {
-                if (btn.getAttribute('data-section') === 'doctors') {
-                    btn.click();
-                }
-            });
+        // Connect to a Doctor button -> open modal with details (no PDF preview/download)
+        document.getElementById('contactDoctorBtn').addEventListener('click', async () => {
+            openDoctorModal();
+            // Load cities and recommendations
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/doctor/cities', { headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } });
+                const { cities } = await res.json();
+                const citySel = document.getElementById('pCity');
+                citySel.innerHTML = '';
+                (cities || []).forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; citySel.appendChild(o); });
+                const changeCity = async () => {
+                    try {
+                        const docRes = await fetch(`/doctor/recommend?city=${encodeURIComponent(citySel.value)}`, { headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } });
+                        const { doctors } = await docRes.json();
+                        const dSel = document.getElementById('doctorSelect');
+                        dSel.innerHTML = '';
+                        (doctors || []).forEach(d => { const o=document.createElement('option'); o.value=d.id; o.textContent=`${d.name} – ${d.specialty}`; dSel.appendChild(o); });
+                    } catch {}
+                };
+                citySel.onchange = changeCity; await changeCity();
+            } catch {}
         });
 
         // Period Tracker Tab Navigation
@@ -4121,10 +4232,6 @@
                     }
                 });
                 
-                // Update visualization if that tab is selected
-                if (targetTab === 'visualization') {
-                    setTimeout(() => updateVisualization(), 100);
-                }
             });
         });
 
@@ -4213,166 +4320,12 @@
                         periodTracker.deletePeriod(id);
                         updateDashboard();
                         renderPeriodHistory();
-                        updateVisualization();
                         showToast('Period deleted successfully');
                     }
                 });
             });
         }
-
-        function updateVisualization() {
-            const stats = periodTracker.getStats();
-            if (!stats || stats.cycleLengths.length < 2) {
-                const canvas = document.getElementById('cycleChart');
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.font = '16px Inter';
-                ctx.fillStyle = '#7f8c8d';
-                ctx.textAlign = 'center';
-                ctx.fillText('Not enough data to visualize (need at least 2 cycles)', canvas.width / 2, canvas.height / 2);
-                return;
-            }
-
-            const cycleLengths = stats.cycleLengths;
-            const cycleNumbers = cycleLengths.map((_, index) => index + 1);
-            
-            // Destroy existing chart if it exists
-            if (cycleChart) {
-                cycleChart.destroy();
-            }
-            
-            // Create new chart
-            const ctx = document.getElementById('cycleChart').getContext('2d');
-            cycleChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: cycleNumbers,
-                    datasets: [{
-                        label: 'Cycle Length (Days)',
-                        data: cycleLengths,
-                        borderColor: '#8e44ad',
-                        backgroundColor: 'rgba(142, 68, 173, 0.1)',
-                        borderWidth: 3,
-                        pointBackgroundColor: '#8e44ad',
-                        pointRadius: 6,
-                        pointHoverRadius: 8,
-                        tension: 0.3,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Menstrual Cycle Length History',
-                            font: {
-                                family: 'Playfair Display',
-                                size: 18,
-                                weight: 'bold'
-                            },
-                            padding: 20
-                        },
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(142, 68, 173, 0.8)',
-                            titleFont: {
-                                family: 'Inter',
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            bodyFont: {
-                                family: 'Inter',
-                                size: 13
-                            },
-                            padding: 12,
-                            cornerRadius: 8,
-                            displayColors: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            min: Math.min(...cycleLengths) - 2,
-                            max: Math.max(...cycleLengths) + 2,
-                            title: {
-                                display: true,
-                                text: 'Cycle Length (Days)',
-                                font: {
-                                    family: 'Inter',
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            },
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Cycle Number',
-                                font: {
-                                    family: 'Inter',
-                                    size: 14,
-                                    weight: 'bold'
-                                }
-                            },
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    elements: {
-                        point: {
-                            hoverBackgroundColor: '#9b59b6'
-                        }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    }
-                }
-            });
-            
-            // Add average line
-            const avgLine = {
-                id: 'avgLine',
-                beforeDatasetsDraw(chart) {
-                    const { ctx, data, chartArea: { top, bottom, left, right }, scales: { y } } = chart;
-                    const avg = stats.avgCycle;
-                    const yPosition = y.getPixelForValue(avg);
-                    
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.moveTo(left, yPosition);
-                    ctx.lineTo(right, yPosition);
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = 'rgba(255, 99, 132, 0.8)';
-                    ctx.setLineDash([5, 5]);
-                    ctx.stroke();
-                    ctx.restore();
-                    
-                    // Add label
-                    ctx.save();
-                    ctx.font = 'bold 12px Inter';
-                    ctx.fillStyle = 'rgba(255, 99, 132, 0.8)';
-                    ctx.textAlign = 'right';
-                    ctx.fillText(`Average: ${avg} days`, right - 10, yPosition - 5);
-                    ctx.restore();
-                }
-            };
-            
-            cycleChart.plugins.push(avgLine);
-            cycleChart.update();
-        }
+        
 
         // Period Form Handling
         const periodForm = document.getElementById('periodForm');
@@ -4440,7 +4393,6 @@
             // Update UI
             updateDashboard();
             renderPeriodHistory();
-            updateVisualization();
             
             showToast('Period added successfully');
             
@@ -4587,6 +4539,203 @@
             }
         });
 
+        // Fitness tracker functionality
+        const fitnessForm = document.getElementById('fitnessForm');
+        const fitnessDate = document.getElementById('fitnessDate');
+        const stepsInput = document.getElementById('stepsInput');
+        const exerciseInput = document.getElementById('exerciseInput');
+        const waterInput = document.getElementById('waterInput');
+        const sleepInput = document.getElementById('sleepInput');
+        const weightInput = document.getElementById('weightInput');
+        const stressInput = document.getElementById('stressInput');
+        const moodSelect = document.getElementById('moodSelect');
+        const flowSelect = document.getElementById('flowSelect');
+        const painInput = document.getElementById('painInput');
+        const crampsChk = document.getElementById('crampsChk');
+        const acneChk = document.getElementById('acneChk');
+        const bloatingChk = document.getElementById('bloatingChk');
+        const headachesChk = document.getElementById('headachesChk');
+        const cravingsChk = document.getElementById('cravingsChk');
+        const fatigueChk = document.getElementById('fatigueChk');
+        const medicationsInput = document.getElementById('medicationsInput');
+        const notesInput = document.getElementById('notesInput');
+    const fitnessSummary = document.getElementById('fitnessSummary');
+    const fitnessHistory = document.getElementById('fitnessHistory');
+
+        function setToday() {
+            if (fitnessDate) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth()+1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                fitnessDate.value = `${yyyy}-${mm}-${dd}`;
+            }
+        }
+        setToday();
+        const todayDateBtn = document.getElementById('todayDateBtn');
+        if (todayDateBtn) { todayDateBtn.addEventListener('click', setToday); }
+
+        async function loadFitness() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+            try {
+                const end = new Date();
+                const start = new Date();
+                start.setDate(end.getDate() - 13);
+                const s = start.toISOString().slice(0,10);
+                const e = end.toISOString().slice(0,10);
+                const [logsResp, statsResp] = await Promise.all([
+                    fetch(`/tracker/logs?start=${s}&end=${e}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch(`/tracker/stats?window_days=30`, { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+                const logs = logsResp.ok ? await logsResp.json() : [];
+                const stats = statsResp.ok ? await statsResp.json() : null;
+                renderFitness(logs, stats);
+            } catch (err) {
+                console.error('Failed to load fitness logs', err);
+            }
+        }
+
+        function renderFitness(logs, stats) {
+            // Summary
+            if (fitnessSummary) {
+                const parts = [];
+                if (stats) {
+                    parts.push(`<div class="prediction-title">Last 30 days overview</div>`);
+                    parts.push(`<div class=\"prediction-item\"><div class=\"prediction-icon\">💤</div><div class=\"prediction-text\">Avg sleep: <strong>${stats.avg_sleep_hours ?? '--'} h</strong></div></div>`);
+                    parts.push(`<div class=\"prediction-item\"><div class=\"prediction-icon\">💧</div><div class=\"prediction-text\">Avg water: <strong>${stats.avg_water_liters ?? '--'} L</strong></div></div>`);
+                    parts.push(`<div class=\"prediction-item\"><div class=\"prediction-icon\">🏃‍♀️</div><div class=\"prediction-text\">Avg exercise: <strong>${stats.avg_exercise_minutes ?? '--'} min</strong></div></div>`);
+                    parts.push(`<div class=\"prediction-item\"><div class=\"prediction-icon\">😣</div><div class=\"prediction-text\">Avg pain: <strong>${stats.avg_pain_level ?? '--'}</strong></div></div>`);
+                    parts.push(`<div class=\"prediction-item\"><div class=\"prediction-icon\">🧠</div><div class=\"prediction-text\">Avg stress: <strong>${stats.avg_stress_level ?? '--'}</strong></div></div>`);
+                }
+                fitnessSummary.innerHTML = parts.join('');
+            }
+
+            // History
+            if (fitnessHistory) {
+                fitnessHistory.innerHTML = '';
+                logs.forEach(l => {
+                    const item = document.createElement('div');
+                    item.className = 'period-item';
+                    item.innerHTML = `
+                        <div class=\"period-info\">
+                            <h4>${l.day}</h4>
+                            <div class=\"period-details\">
+                                <span>Sleep: <strong>${l.sleep_hours ?? '--'}h</strong></span>
+                                <span>Water: <strong>${l.water_liters ?? '--'}L</strong></span>
+                                <span>Exercise: <strong>${l.exercise_minutes ?? '--'}m</strong></span>
+                                <span>Steps: <strong>${l.steps ?? '--'}</strong></span>
+                                <span>Pain: <strong>${l.pain_level ?? '--'}</strong></span>
+                                <span>Flow: <strong>${l.flow_level || 'none'}</strong></span>
+                            </div>
+                            <div class=\"period-symptoms\">
+                                ${(l.cramps ? '<span class=\"symptom-tag\">Cramps</span>' : '')}
+                                ${(l.acne ? '<span class=\"symptom-tag\">Acne</span>' : '')}
+                                ${(l.bloating ? '<span class=\"symptom-tag\">Bloating</span>' : '')}
+                                ${(l.headaches ? '<span class=\"symptom-tag\">Headaches</span>' : '')}
+                                ${(l.cravings ? '<span class=\"symptom-tag\">Cravings</span>' : '')}
+                                ${(l.fatigue ? '<span class=\"symptom-tag\">Fatigue</span>' : '')}
+                            </div>
+                        </div>
+                    `;
+                    fitnessHistory.appendChild(item);
+                });
+            }
+        }
+
+        if (fitnessForm) {
+            fitnessForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const token = localStorage.getItem('token');
+                if (!token) { showToast('Please log in'); return; }
+                const body = {
+                    day: fitnessDate.value,
+                    steps: stepsInput.value ? parseInt(stepsInput.value) : undefined,
+                    exercise_minutes: exerciseInput.value ? parseInt(exerciseInput.value) : undefined,
+                    water_liters: waterInput.value ? parseFloat(waterInput.value) : undefined,
+                    sleep_hours: sleepInput.value ? parseFloat(sleepInput.value) : undefined,
+                    weight_kg: weightInput.value ? parseFloat(weightInput.value) : undefined,
+                    stress_level: stressInput.value ? parseInt(stressInput.value) : undefined,
+                    mood: moodSelect.value || undefined,
+                    flow_level: flowSelect.value || undefined,
+                    pain_level: painInput.value ? parseInt(painInput.value) : undefined,
+                    cramps: crampsChk.checked,
+                    acne: acneChk.checked,
+                    bloating: bloatingChk.checked,
+                    headaches: headachesChk.checked,
+                    cravings: cravingsChk.checked,
+                    fatigue: fatigueChk.checked,
+                    medications: medicationsInput.value ? medicationsInput.value.split(',').map(s => s.trim()).filter(Boolean) : [],
+                    notes: notesInput.value || undefined,
+                };
+                try {
+                    const resp = await fetch('/tracker/logs', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify(body)
+                    });
+                    if (resp.ok) {
+                        showToast('Saved');
+                        // Build a concise prompt for AI suggestions (include all collected fields)
+                        const notesSnippet = body.notes ? body.notes.slice(0, 140) : '';
+                        const medsList = (body.medications || []).slice(0, 5).join(', ');
+                        const prompt = `Provide concise daily wellbeing recommendations for a woman (PCOS-aware) based on: ` +
+                            `steps=${body.steps ?? 'n/a'}, exercise_min=${body.exercise_minutes ?? 'n/a'}, water_L=${body.water_liters ?? 'n/a'}, ` +
+                            `sleep_h=${body.sleep_hours ?? 'n/a'}, stress=${body.stress_level ?? 'n/a'}, mood=${body.mood || 'n/a'}, ` +
+                            `flow=${body.flow_level || 'none'}, pain=${body.pain_level ?? 0}, weight_kg=${body.weight_kg ?? 'n/a'}, ` +
+                            `symptoms=[${['cramps','acne','bloating','headaches','cravings','fatigue'].filter(k => body[k]).join(', ')}], ` +
+                            `meds=[${medsList || 'none'}]` + (notesSnippet ? `, notes="${notesSnippet}"` : '') + `. ` +
+                            `Return a short, structured list. No chain-of-thought.`;
+
+                        // Render AI suggestion into dedicated box (not overwritten by summary)
+                        const box = document.getElementById('aiSuggestionBox');
+                        if (box) box.innerHTML = `<span style="color:#6c3483;">Loading AI suggestions...</span>`;
+                        try {
+                            // Dev verification: ensure full payload reaches Groq backend as part of the prompt
+                            console.debug('[AI Suggest] Sending prompt with context:', { day: body.day, steps: body.steps, exercise_minutes: body.exercise_minutes, water_liters: body.water_liters, sleep_hours: body.sleep_hours, weight_kg: body.weight_kg, stress_level: body.stress_level, mood: body.mood, flow_level: body.flow_level, pain_level: body.pain_level, symptoms: ['cramps','acne','bloating','headaches','cravings','fatigue'].filter(k => body[k]), medications: body.medications, notes: notesSnippet });
+                            const aiResp = await fetch('/ai-suggest', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify({ prompt })
+                            });
+                            const aiData = await aiResp.json();
+                            if (!aiResp.ok || !aiData || !aiData.suggestion) {
+                                if (box) box.innerHTML = `<span style=\"color:#e74c3c;\">${(aiData && aiData.error) ? aiData.error : 'No suggestion available.'}</span>`;
+                            } else {
+                                const html = (window.marked && typeof marked.parse === 'function') ? marked.parse(aiData.suggestion) : aiData.suggestion;
+                                if (box) box.innerHTML = `<strong style=\"color:#8e44ad;\">AI Suggestion:</strong><div class=\"ai-markdown\">${html}</div>`;
+                            }
+                        } catch (e2) {
+                            if (box) box.innerHTML = `<span style=\"color:#e74c3c;\">Could not fetch AI suggestions.</span>`;
+                        }
+                        // Refresh stats/history after AI suggestion renders
+                        loadFitness();
+                    } else if (resp.status === 401) {
+                        showToast('Session expired. Please log in again.');
+                    } else {
+                        const err = await resp.text();
+                        showToast(err || 'Save failed');
+                    }
+                } catch (err) {
+                    console.error('Save failed', err);
+                    showToast('Network error');
+                }
+            });
+        }
+
+        // Load fitness logs after login or when navigating to fitness section
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.getAttribute('data-section') === 'fitness') {
+                    loadFitness();
+                }
+            });
+        });
+        // Also load once after app shows
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            loadFitness();
+        }
+
         // Doctor Contact functionality
         const doctorGrid = document.getElementById('doctorGrid');
         
@@ -4670,6 +4819,72 @@
 
         // Initialize the wizard
         showStep(1);
+    </script>
+    
+    <!-- Connect to a Doctor Modal (no PDF preview) -->
+    <div id="doctorModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:3000; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:14px; width:95%; max-width:640px; box-shadow:0 18px 42px rgba(0,0,0,.25); overflow:hidden;">
+            <div style="padding:1rem;">
+                <h3 style="margin:0 0 .5rem; color:#6c3483;">Your Details</h3>
+                <form id="doctorForm" class="login-form" style="margin-top:.25rem;">
+                    <div class="form-group"><label for="pName">Full Name</label><input id="pName" class="form-control" required></div>
+                    <div class="form-group"><label for="pAge">Age</label><input id="pAge" class="form-control" type="number" min="1" max="120"></div>
+                    <div class="form-group"><label for="pEmail">Email</label><input id="pEmail" class="form-control" type="email"></div>
+                    <div class="form-group"><label for="pPhone">Phone</label><input id="pPhone" class="form-control"></div>
+                    <div class="form-group"><label for="pCity">City</label><select id="pCity" class="form-control" required></select></div>
+                    <div class="form-group"><label for="doctorSelect">Doctor</label><select id="doctorSelect" class="form-control"></select></div>
+                    <div style="display:flex; gap:.75rem; margin-top:.75rem;">
+                        <button type="button" id="doctorCancelBtn" class="btn btn-secondary" style="flex:1;">Cancel</button>
+                        <button type="submit" class="btn" style="flex:1;">Send</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+    function openDoctorModal(){
+        const modal = document.getElementById('doctorModal');
+        if (modal) modal.style.display = 'flex';
+        const cancel = document.getElementById('doctorCancelBtn');
+        if (cancel) cancel.onclick = () => { modal.style.display = 'none'; };
+        const form = document.getElementById('doctorForm');
+        if (form && !form._wired){
+            form._wired = true;
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const token = localStorage.getItem('token');
+                if (!token) { showToast('Please log in'); return; }
+                const body = {
+                    doctor_id: (document.getElementById('doctorSelect').value || null),
+                    patient: {
+                        name: document.getElementById('pName').value,
+                        age: document.getElementById('pAge').value ? parseInt(document.getElementById('pAge').value) : undefined,
+                        email: document.getElementById('pEmail').value || undefined,
+                        phone: document.getElementById('pPhone').value || undefined,
+                        city: document.getElementById('pCity').value,
+                    },
+                    inputs: (typeof lastPredictionInputs === 'object' && lastPredictionInputs) ? lastPredictionInputs : {},
+                    prediction: (typeof lastPredictionResult === 'object' && lastPredictionResult) ? lastPredictionResult : {},
+                };
+                try {
+                    const resp = await fetch('/doctor/consult', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify(body)
+                    });
+                    const data = await resp.json();
+                    if (resp.ok) {
+                        showToast('Consult request sent');
+                        document.getElementById('doctorModal').style.display = 'none';
+                    } else {
+                        showToast((data && data.detail) ? data.detail : 'Failed to send');
+                    }
+                } catch (err) {
+                    console.error('Consult send failed', err);
+                    showToast('Network error');
+                }
+            });
+        }
+    }
     </script>
 </body>
 </html>

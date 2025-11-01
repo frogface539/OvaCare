@@ -1,5 +1,7 @@
 import os
 from dotenv import load_dotenv
+# Load environment variables as early as possible so routers see them at import time
+load_dotenv()
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import re
@@ -12,10 +14,12 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from router.auth import auth_router, get_current_user 
+from router.tracker import tracker_router
+from router.doctor import router as doctor_router
 from db import init_db
 from fastapi import Depends
+from fastapi.staticfiles import StaticFiles
 
-load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_PATH = BASE_DIR / "frontend.html"
@@ -35,6 +39,8 @@ NUM_COLS = [
 app = FastAPI(title="OVACARE Gateway", version="1.0.0")
 
 app.include_router(auth_router)
+app.include_router(tracker_router)
+app.include_router(doctor_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -79,6 +85,16 @@ def load_artifacts():
 
     if SCALER_PATH.exists():
         scaler = _load(SCALER_PATH)
+
+    # ensure media directory exists for serving PDFs
+    media_dir = os.environ.get("MEDIA_DIR", os.path.join(os.getcwd(), "media"))
+    os.makedirs(media_dir, exist_ok=True)
+    # Mount static files for media if not already mounted
+    try:
+        app.mount("/media", StaticFiles(directory=media_dir), name="media")
+    except Exception:
+        # already mounted
+        pass
 
 
 def _ensure_bmi(row: Dict[str, Any]) -> Dict[str, Any]:

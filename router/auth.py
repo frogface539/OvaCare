@@ -9,7 +9,7 @@ from jose import JWTError, jwt
 import logging
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from db import get_db, User as DbUser, UserVerification, UserPasswordReset
+from db import get_db, User as DbUser, UserVerification, UserPasswordReset, PendingSignup
 import smtplib
 from email.message import EmailMessage
 import hashlib
@@ -127,9 +127,16 @@ def _send_email(to_email: str, subject: str, body: str) -> bool:
         server.send_message(msg)
     return True
 
-@auth_router.post("/signup", response_model=UserOut, status_code=201)
+class MessageResponse(BaseModel):
+    message: str
+
+
+@auth_router.post("/signup", response_model=MessageResponse, status_code=201)
 def signup(user: UserSignup, db: Session = Depends(get_db)):
-    # Uniqueness: username and email
+    """Begin signup by creating a pending record and emailing an OTP.
+    The actual user row is only created after successful verification.
+    """
+    # Block if already a registered user
     existing_user = db.query(DbUser).filter((DbUser.username == user.username) | (DbUser.email == user.email)).first()
     if existing_user:
         if existing_user.username == user.username:
@@ -137,36 +144,50 @@ def signup(user: UserSignup, db: Session = Depends(get_db)):
         else:
             raise HTTPException(status_code=400, detail="Email already registered")
 
-    hashed_password = get_password_hash(user.password)
-    db_user = DbUser(username=user.username, email=user.email, password_hash=hashed_password)
-    try:
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Username or email already registered")
+    # Block if another pending signup is using same username or email (avoid confusion)
+    pending = db.query(PendingSignup).filter((PendingSignup.username == user.username) | (PendingSignup.email == user.email)).first()
+    if pending and (pending.username != user.username or pending.email != user.email):
+        # Someone else is attempting with either same username or same email
+        if pending.username == user.username:
+            raise HTTPException(status_code=400, detail="Username already in use (pending verification)")
+        if pending.email == user.email:
+            raise HTTPException(status_code=400, detail="Email already in use (pending verification)")
 
-    # Create verification entry and send OTP
+    # Create or update pending signup
+    hashed_password = get_password_hash(user.password)
     code = _gen_otp()
-    ver = UserVerification(
-        user_id=db_user.id,
-        verified=False,
-        code_hash=_hash_code(code),
-        expires_at=_utcnow() + timedelta(minutes=10),
-        last_sent_at=_utcnow(),
-    )
-    db.add(ver)
+    now = _utcnow()
+    if not pending:
+        pending = PendingSignup(
+            username=user.username,
+            email=user.email,
+            password_hash=hashed_password,
+            code_hash=_hash_code(code),
+            expires_at=now + timedelta(minutes=10),
+            last_sent_at=now,
+        )
+        db.add(pending)
+    else:
+        # Refresh password and code
+        pending.password_hash = hashed_password
+        pending.code_hash = _hash_code(code)
+        pending.expires_at = now + timedelta(minutes=10)
+        pending.last_sent_at = now
+        db.add(pending)
     db.commit()
 
     subject = "OVACARE: Verify your email"
-    body = f"Hello {db_user.username},\n\nYour verification code is: {code}\nThis code will expire in 10 minutes.\n\nIf you did not sign up, please ignore this email."
-    sent = _send_email(db_user.email, subject, body)
+    body = (
+        f"Hello {user.username},\n\n"
+        f"Your verification code is: {code}\nThis code will expire in 10 minutes.\n\n"
+        f"If you did not sign up, please ignore this email."
+    )
+    sent = _send_email(user.email, subject, body)
     if not sent:
-        logger.warning("SMTP not configured; sent OTP via logs for %s: %s", db_user.email, code)
+        logger.warning("SMTP not configured; sent OTP via logs for %s: %s", user.email, code)
 
-    logger.info(f"✅ New user signed up: {user.username} ({user.email}) - verification code issued")
-    return UserOut(username=db_user.username, email=db_user.email)
+    logger.info(f"✅ Pending signup created for {user.username} ({user.email}); verification code issued")
+    return MessageResponse(message="Verification code sent. Check your email to complete signup.")
 
 
 
@@ -179,9 +200,10 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     if not user or not verify_password(password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
 
-    # Enforce email verification
+    # Enforce email verification only for legacy accounts that used UserVerification.
+    # For the new flow, users are created only after verification, so no record exists -> allow login.
     ver = db.query(UserVerification).filter(UserVerification.user_id == user.id).first()
-    if not ver or not ver.verified:
+    if ver and not ver.verified:
         raise HTTPException(status_code=403, detail="Email not verified. Please check your email for the verification code.")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -248,6 +270,33 @@ class VerifyEmailRequest(BaseModel):
 
 @auth_router.post("/verify-email")
 def verify_email(payload: VerifyEmailRequest, db: Session = Depends(get_db)):
+    """Verify email for either pending signups (new flow) or legacy unverified users (old flow)."""
+    now = _utcnow()
+    # New flow: pending signup exists
+    pending = db.query(PendingSignup).filter(PendingSignup.email == payload.email).first()
+    if pending:
+        exp = _as_naive_utc(pending.expires_at)
+        if exp and now > exp:
+            raise HTTPException(status_code=400, detail="Verification code expired. Please resend a new code.")
+        if _hash_code(payload.code) != pending.code_hash:
+            raise HTTPException(status_code=400, detail="Invalid code")
+
+        # Ensure no user was created concurrently
+        conflict = db.query(DbUser).filter((DbUser.username == pending.username) | (DbUser.email == pending.email)).first()
+        if conflict:
+            raise HTTPException(status_code=400, detail="Account already exists. Try signing in.")
+
+        # Create user and clear pending
+        user = DbUser(username=pending.username, email=pending.email, password_hash=pending.password_hash)
+        db.add(user)
+        db.commit()
+
+        # Remove pending record
+        db.delete(pending)
+        db.commit()
+        return {"message": "Email verified successfully"}
+
+    # Legacy flow fallback
     user = db.query(DbUser).filter(DbUser.email == payload.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -258,7 +307,7 @@ def verify_email(payload: VerifyEmailRequest, db: Session = Depends(get_db)):
         return {"message": "Email already verified"}
     if ver.expires_at:
         exp = _as_naive_utc(ver.expires_at)
-        if _utcnow() > exp:
+        if now > exp:
             raise HTTPException(status_code=400, detail="Verification code expired. Please resend a new code.")
     if _hash_code(payload.code) != ver.code_hash:
         raise HTTPException(status_code=400, detail="Invalid code")
@@ -277,16 +326,35 @@ class ResendCodeRequest(BaseModel):
 
 @auth_router.post("/resend-code")
 def resend_code(payload: ResendCodeRequest, db: Session = Depends(get_db)):
+    now = _utcnow()
+    # First try new flow (pending signup)
+    pending = db.query(PendingSignup).filter(PendingSignup.email == payload.email).first()
+    if pending:
+        last = _as_naive_utc(pending.last_sent_at)
+        if last and (now - last).total_seconds() < 60:
+            raise HTTPException(status_code=429, detail="Please wait before requesting a new code")
+        code = _gen_otp()
+        pending.code_hash = _hash_code(code)
+        pending.expires_at = now + timedelta(minutes=10)
+        pending.last_sent_at = now
+        db.add(pending)
+        db.commit()
+
+        subject = "OVACARE: Your verification code"
+        body = f"Your verification code is: {code}\nThis code will expire in 10 minutes."
+        sent = _send_email(pending.email, subject, body)
+        if not sent:
+            logger.warning("SMTP not configured; resent OTP via logs for %s: %s", pending.email, code)
+        return {"message": "Verification code sent"}
+
+    # Fallback to legacy flow
     user = db.query(DbUser).filter(DbUser.email == payload.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     ver = db.query(UserVerification).filter(UserVerification.user_id == user.id).first()
     if not ver:
-        # Create a new verification record if not exists (edge case)
         ver = UserVerification(user_id=user.id, verified=False)
 
-    # Simple rate limit: 60s between sends
-    now = _utcnow()
     last = _as_naive_utc(ver.last_sent_at)
     if last and (now - last).total_seconds() < 60:
         raise HTTPException(status_code=429, detail="Please wait before requesting a new code")
