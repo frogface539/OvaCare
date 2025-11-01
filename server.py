@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import re
@@ -10,6 +11,11 @@ import requests
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from router.auth import auth_router, get_current_user 
+from db import init_db
+from fastapi import Depends
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_PATH = BASE_DIR / "frontend.html"
@@ -27,6 +33,9 @@ NUM_COLS = [
 ]
 
 app = FastAPI(title="OVACARE Gateway", version="1.0.0")
+
+app.include_router(auth_router)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -48,6 +57,8 @@ def _load(path: Path):
 @app.on_event("startup")
 def load_artifacts():
     global model, encoders, feature_names, scaler
+    # Ensure DB tables exist
+    init_db()
     if not MODEL_PATH.exists():
         raise RuntimeError(f"Missing model at {MODEL_PATH}")
     model = _load(MODEL_PATH)
@@ -171,8 +182,11 @@ def index():
     return FileResponse(FRONTEND_PATH)
 
 
+from fastapi import Depends
+from router.auth import get_current_user
+
 @app.post("/predict")
-async def predict_handler(request: Request):
+async def predict_handler(request: Request, current_user: dict = Depends(get_current_user)):
     try:
         payload = await request.json()
         if not isinstance(payload, dict):
@@ -204,7 +218,7 @@ async def predict_handler(request: Request):
         raise HTTPException(status_code=500, detail=f"Prediction failed: {e}")
 
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 GROQ_MODEL = os.environ.get("GROQ_MODEL", "qwen/qwen3-32b")
 SYSTEM_PROMPT = (
     "You are an expert assistant specialized in PCOS (Polycystic Ovary Syndrome). "
@@ -217,14 +231,16 @@ SYSTEM_PROMPT = (
 
 
 @app.post("/chat")
-async def chat_handler(request: Request):
+async def chat_handler(request: Request , current_user: dict = Depends(get_current_user)):
     try:
         data = await request.json()
         message = (data or {}).get("message", "").strip()
         if not message:
             raise HTTPException(status_code=400, detail="message is required")
 
-        if not GROQ_API_KEY:
+        # Read the API key from environment at request time to avoid stale values
+        api_key = os.environ.get("GROQ_API_KEY")
+        if not api_key:
             return JSONResponse({
                 "response": (
                     "Chat backend is not configured. Set GROQ_API_KEY to enable responses, "
@@ -241,7 +257,7 @@ async def chat_handler(request: Request):
             "temperature": 0.3,
             "max_tokens": 512,
         }
-        headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         resp = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers=headers,
@@ -274,26 +290,34 @@ def _strip_think(text: str) -> str:
 
 
 @app.post("/ai-suggest")
-async def ai_suggest(request: Request):
+async def ai_suggest(request: Request , current_user: dict = Depends(get_current_user)):
     try:
         data = await request.json()
         prompt = data.get("prompt")
         print("Prompt received:", prompt) 
         groq_api_url = "https://api.groq.com/openai/v1/chat/completions"
-        groq_api_key = "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"
+        groq_api_key = os.environ.get("GROQ_API_KEY")
+        if not groq_api_key:
+            return JSONResponse(status_code=500, content={"error": "GROQ_API_KEY not configured"})
         payload = {
-            "model": "qwen/qwen3-32b",
-            "messages": [{"role": "user", "content": prompt}]
+            "model": GROQ_MODEL,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.3,
+            "max_tokens": 512,
         }
         headers = {
             "Authorization": f"Bearer {groq_api_key}",
             "Content-Type": "application/json"
         }
-        response = requests.post(groq_api_url, json=payload, headers=headers)
+        response = requests.post(groq_api_url, json=payload, headers=headers, timeout=30)
         print("Groq response status:", response.status_code)  
         print("Groq response body:", response.text)  
         response.raise_for_status()
-        suggestion = clean_ai_response(response.json()["choices"][0]["message"]["content"])
+        raw = response.json()["choices"][0]["message"]["content"]
+        suggestion = clean_ai_response(_strip_think(raw))
         return {"suggestion": suggestion}
     except Exception as e:
         print("Error in /ai-suggest:", e) 

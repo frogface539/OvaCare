@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OVACARE - Women's Health Assistance Portal</title>
+    <title>OvaCare - Women's Health Assistance Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -388,11 +388,7 @@
             display: none;
         }
 
-        .demo-note {
-            margin-top: 2rem;
-            font-size: 0.9rem;
-            color: var(--light-text);
-        }
+        /* removed: .demo-note (demo credentials note no longer shown) */
 
         /* Main App Styles (hidden initially) */
         .app-container {
@@ -1944,6 +1940,31 @@
         .floating {
             animation: float 3s ease-in-out infinite;
         }
+
+        /* User dropdown styles */
+        .user-menu { position: relative; display: flex; align-items: center; gap: 0.5rem; }
+        .user-dropdown { position: relative; }
+        .dropdown-toggle {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: transparent; border: 1px solid var(--primary-color);
+            color: var(--primary-color); padding: 0.45rem 0.75rem; border-radius: 10px; cursor: pointer;
+        }
+        .dropdown-toggle i { font-size: 0.9rem; }
+        .dropdown-menu {
+            position: absolute; right: 0; top: 120%;
+            background: var(--white); border: 1px solid #eee; border-radius: 10px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08); padding: 0.4rem; display: none; min-width: 180px;
+            z-index: 9999;
+        }
+        .dropdown-menu.open { display: block; }
+        .dropdown-item { width: 100%; text-align: left; background: transparent; border: 0; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer; color: var(--text-color); }
+        .dropdown-item:hover { background: #faf5ff; color: var(--primary-color); }
+
+        /* Auth page CTAs */
+        .signup-cta-text { margin-top: 0.8rem; text-align: center; color: var(--primary-color); font-weight: 600; }
+        .signup-cta-text a { color: var(--primary-color); text-decoration: underline; }
+        .forgot-cta-text { margin-top: 0.6rem; text-align: center; color: var(--light-text); font-size: 0.95rem; }
+        .forgot-cta-text a { color: var(--primary-color); text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -1952,7 +1973,7 @@
         <div class="login-card">
             <div class="login-logo">
                 <span>🌸</span>
-                <span>OVACARE</span>
+                <span>OvaCare</span>
             </div>
             <form class="login-form" id="loginForm">
                 <div class="form-group">
@@ -1966,10 +1987,57 @@
                 <button type="submit" class="btn">Login</button>
                 <div class="login-error" id="loginError">Invalid username or password</div>
             </form>
-            <div class="demo-note">
-                <p>Demo credentials:</p>
-                <p>Username: user | Password: password</p>
+            
+            <div id="signupCta" class="signup-cta-text">
+                <span>No account? <a href="#" id="showSignupLink">Create one!</a></span>
             </div>
+
+            <div id="forgotCtaRow" class="forgot-cta-text">
+                <span>Forgot password? <a href="#" id="forgotPasswordLink">Reset Password</a></span>
+            </div>
+
+            <form class="login-form" id="signupForm" style="margin-top:2rem; display:none;">
+                <h3 style="color:#8e44ad;">Sign Up</h3>
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" class="form-control" id="signupUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" class="form-control" id="signupEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" class="form-control" id="signupPassword" required>
+                </div>
+                <button type="submit" class="btn btn-secondary">Sign Up</button>
+                <div class="login-error" id="signupError">Signup failed</div>
+                <div style="margin-top:0.8rem;">
+                    <button id="showLoginLink" type="button" class="btn btn-secondary" style="width:100%;">Already have an account? Back to sign in</button>
+                </div>
+            </form>
+
+            <!-- Email Verification Form -->
+            <form class="login-form" id="verifyForm" style="margin-top:2rem; display:none;">
+                <h3 style="color:#8e44ad;">Verify your email</h3>
+                <p style="color:#6c3483; font-size:0.95rem; margin-top:0.25rem;">We sent a 6-digit code to your email. Enter it below to complete signup.</p>
+                <div class="form-group">
+                    <label for="verifyEmail">Email</label>
+                    <input type="email" class="form-control" id="verifyEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="verifyCode">Verification Code</label>
+                    <input type="text" class="form-control" id="verifyCode" maxlength="10" required>
+                </div>
+                <button type="submit" class="btn">Verify</button>
+                <div class="login-error" id="verifyError">Verification failed</div>
+                <div class="forgot-cta-text" style="margin-top:0.8rem;">
+                    <span>Didn't get a code? <a href="#" id="resendCodeLink">Resend</a></span>
+                </div>
+                <div style="margin-top:0.8rem;">
+                    <button id="backToLoginFromVerify" type="button" class="btn btn-secondary" style="width:100%;">Back to sign in</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1992,8 +2060,16 @@
                         </ul>
                     </nav>
                     <div class="user-menu">
-                        <span class="user-name" id="userName">Welcome</span>
-                        <button class="logout-btn" id="logoutBtn">Logout</button>
+                        <div class="user-dropdown">
+                            <button id="userDropdownToggle" class="dropdown-toggle">
+                                <span class="user-name" id="userName">Welcome</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-menu" id="userDropdownMenu">
+                                <button id="changePasswordBtn" class="dropdown-item">Change Password</button>
+                                <button id="logoutBtn" class="dropdown-item">Logout</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2004,7 +2080,7 @@
                 <!-- Landing Page Section -->
                 <section id="landing" class="section active">
                     <div class="landing-hero">
-                        <h1>Welcome to OVACARE</h1>
+                        <h1>Welcome to OvaCare</h1>
                         <p>Your comprehensive resource for PCOS information, risk assessment, period tracking, and finding trusted healthcare providers.</p>
                     </div>
                     
@@ -2666,8 +2742,83 @@
     </div>
 
     <div class="toast" id="toast"></div>
-    <!-- Floating Chatbot Button -->
-    <button id="chatbotFab" class="chatbot-fab">
+    
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" style="display:none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 2000; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:1.5rem; border-radius:12px; width:90%; max-width:420px; box-shadow:0 10px 30px rgba(0,0,0,0.15);">
+            <h3 style="margin-top:0; color:#8e44ad;">Change Password</h3>
+            <form id="changePasswordForm" class="login-form" style="margin-top:0.5rem;">
+                <div class="form-group">
+                    <label for="oldPassword">Current Password</label>
+                    <input type="password" class="form-control" id="oldPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" class="form-control" id="newPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirmPassword" required>
+                </div>
+                <div id="changePwdError" class="login-error">Error</div>
+                <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+                    <button type="button" id="cancelChangePwd" class="btn btn-secondary" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn" style="flex:1;">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Forgot Password Modal (UI only for now) -->
+    <div id="forgotPasswordModal" style="display:none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 2000; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:1.5rem; border-radius:12px; width:90%; max-width:420px; box-shadow:0 10px 30px rgba(0,0,0,0.15);">
+            <h3 style="margin-top:0; color:#8e44ad;">Reset Password</h3>
+            <p style="margin-top:0.25rem; color:#6c3483;">Enter your account email to request a reset link.</p>
+            <form id="forgotPasswordForm" class="login-form" style="margin-top:0.5rem;">
+                <div class="form-group">
+                    <label for="resetEmail">Email</label>
+                    <input type="email" class="form-control" id="resetEmail" required>
+                </div>
+                <div id="forgotPwdError" class="login-error">Error</div>
+                <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+                    <button type="button" id="cancelForgotPwd" class="btn btn-secondary" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn" style="flex:1;">Send</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Reset Confirm Modal -->
+    <div id="resetConfirmModal" style="display:none; position: fixed; inset:0; background: rgba(0,0,0,0.4); z-index: 2000; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:1.5rem; border-radius:12px; width:90%; max-width:420px; box-shadow:0 10px 30px rgba(0,0,0,0.15);">
+            <h3 style="margin-top:0; color:#8e44ad;">Enter Reset Code</h3>
+            <p style="margin-top:0.25rem; color:#6c3483;">Check your email for a 6-digit code, then set a new password.</p>
+            <form id="resetConfirmForm" class="login-form" style="margin-top:0.5rem;">
+                <div class="form-group">
+                    <label for="resetEmail2">Email</label>
+                    <input type="email" class="form-control" id="resetEmail2" required>
+                </div>
+                <div class="form-group">
+                    <label for="resetCode">Reset Code</label>
+                    <input type="text" class="form-control" id="resetCode" maxlength="10" required>
+                </div>
+                <div class="form-group">
+                    <label for="resetNewPassword">New Password</label>
+                    <input type="password" class="form-control" id="resetNewPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="resetConfirmPassword">Confirm New Password</label>
+                    <input type="password" class="form-control" id="resetConfirmPassword" required>
+                </div>
+                <div id="resetConfirmError" class="login-error">Error</div>
+                <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+                    <button type="button" id="cancelResetConfirm" class="btn btn-secondary" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn" style="flex:1;">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Floating Chatbot Button (hidden until login) -->
+    <button id="chatbotFab" class="chatbot-fab" style="display:none;">
         <i class="fas fa-comment-dots"></i>
     </button>
 
@@ -2697,9 +2848,13 @@
             const aiSuggestionDiv = document.getElementById('aiSuggestion');
             aiSuggestionDiv.innerHTML = `<span style="color:#6c3483;">Loading AI suggestions...</span>`;
             try {
-                const response = await fetch('/ai-suggest', {
+               const token = localStorage.getItem('token');
+               const response = await fetch('/ai-suggest', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     prompt: `Based on these daily values: steps: ${steps}, exercise: ${exercise} min, water: ${water} L, sleep: ${sleep} hrs, suggest improvements and healthy habits for a woman. Do NOT include your reasoning or thinking process. Only provide a concise, structured list of recommendations and improvements for each category (steps, exercise, water, sleep). Do not explain your thought process or assumptions.`
                 })
@@ -2856,51 +3011,502 @@
         let cycleChart = null;
         let riskChart = null;
 
-        // Login functionality
+        // Login & Signup functionality
         const loginPage = document.getElementById('loginPage');
         const appContainer = document.getElementById('appContainer');
         const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
         const loginError = document.getElementById('loginError');
+        const signupError = document.getElementById('signupError');
         const logoutBtn = document.getElementById('logoutBtn');
         const userName = document.getElementById('userName');
+    const showSignupLink = document.getElementById('showSignupLink');
+    const showLoginLink = document.getElementById('showLoginLink');
+    const signupCta = document.getElementById('signupCta');
+    const forgotCtaRow = document.getElementById('forgotCtaRow');
+    // Verification form elements
+    const verifyForm = document.getElementById('verifyForm');
+    const verifyEmail = document.getElementById('verifyEmail');
+    const verifyCode = document.getElementById('verifyCode');
+    const verifyError = document.getElementById('verifyError');
+    const resendCodeLink = document.getElementById('resendCodeLink');
+    const backToLoginFromVerify = document.getElementById('backToLoginFromVerify');
+    const changePasswordBtn = document.getElementById('changePasswordBtn');
+    const changePasswordModal = document.getElementById('changePasswordModal');
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    const cancelChangePwd = document.getElementById('cancelChangePwd');
+    const changePwdError = document.getElementById('changePwdError');
+    // User dropdown
+    const userDropdownToggle = document.getElementById('userDropdownToggle');
+    const userDropdownMenu = document.getElementById('userDropdownMenu');
+    // Forgot password UI
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    const cancelForgotPwd = document.getElementById('cancelForgotPwd');
+    const forgotPwdError = document.getElementById('forgotPwdError');
+    // Reset confirm UI
+    const resetConfirmModal = document.getElementById('resetConfirmModal');
+    const resetConfirmForm = document.getElementById('resetConfirmForm');
+    const cancelResetConfirm = document.getElementById('cancelResetConfirm');
+    const resetConfirmError = document.getElementById('resetConfirmError');
 
-        // Check if user is already logged in
         window.addEventListener('DOMContentLoaded', () => {
             const isLoggedIn = localStorage.getItem('isLoggedIn');
             const username = localStorage.getItem('username');
-            
             if (isLoggedIn === 'true' && username) {
                 showApp(username);
             }
-            
-            // Initialize form validation
             initializeFormValidation();
-            // Initialize BMI auto-calculation
             initializeBMICalculation();
         });
 
-        loginForm.addEventListener('submit', (e) => {
+        // Toggle between Sign In and Sign Up
+        function showSignup() {
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'flex';
+            loginError.style.display = 'none';
+            if (signupCta) signupCta.style.display = 'none';
+            if (verifyForm) verifyForm.style.display = 'none';
+            if (forgotCtaRow) forgotCtaRow.style.display = 'none';
+        }
+
+        function showSignin() {
+            signupForm.style.display = 'none';
+            loginForm.style.display = 'flex';
+            signupError.style.display = 'none';
+            if (signupCta) signupCta.style.display = 'block';
+            if (verifyForm) verifyForm.style.display = 'none';
+            if (forgotCtaRow) forgotCtaRow.style.display = 'block';
+        }
+
+        if (showSignupLink) {
+            showSignupLink.addEventListener('click', showSignup);
+        }
+        if (showLoginLink) {
+            showLoginLink.addEventListener('click', showSignin);
+        }
+        if (backToLoginFromVerify) {
+            backToLoginFromVerify.addEventListener('click', showSignin);
+        }
+
+        // Dropdown toggle behavior
+        if (userDropdownToggle && userDropdownMenu) {
+            userDropdownToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdownMenu.classList.toggle('open');
+            });
+            document.addEventListener('click', () => userDropdownMenu.classList.remove('open'));
+        }
+
+        // Change Password UI handlers
+        if (changePasswordBtn) {
+            changePasswordBtn.addEventListener('click', () => {
+                if (changePasswordModal) changePasswordModal.style.display = 'flex';
+                if (changePwdError) changePwdError.style.display = 'none';
+                const oldP = document.getElementById('oldPassword');
+                const newP = document.getElementById('newPassword');
+                const confP = document.getElementById('confirmPassword');
+                if (oldP) oldP.value = '';
+                if (newP) newP.value = '';
+                if (confP) confP.value = '';
+            });
+        }
+        if (cancelChangePwd) {
+            cancelChangePwd.addEventListener('click', () => {
+                if (changePasswordModal) changePasswordModal.style.display = 'none';
+            });
+        }
+
+        // Forgot Password UI
+        if (forgotPasswordLink) {
+            forgotPasswordLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (forgotPasswordModal) forgotPasswordModal.style.display = 'flex';
+                if (forgotPwdError) forgotPwdError.style.display = 'none';
+                const email = document.getElementById('resetEmail');
+                if (email) email.value = '';
+            });
+        }
+        if (cancelForgotPwd) {
+            cancelForgotPwd.addEventListener('click', () => {
+                if (forgotPasswordModal) forgotPasswordModal.style.display = 'none';
+            });
+        }
+
+        // Login functionality (Connected with FastAPI)
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            // Simple authentication (in a real app, this would be handled by a backend)
-            if (username === 'user' && password === 'password') {
-                localStorage.setItem('isLoggedIn', 'true');
-                localStorage.setItem('username', username);
-                showApp(username);
-            } else {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        username: username,
+                        password: password
+                    })
+                });
+                let data = null; let text = '';
+                try {
+                    const ct = response.headers.get('content-type') || '';
+                    if (ct.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        text = await response.text();
+                    }
+                } catch (err) {
+                    try { text = await response.text(); } catch { /* ignore */ }
+                }
+                if (response.ok) {
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('username', username);
+                    if (data && data.access_token) {
+                        localStorage.setItem('token', data.access_token); // Save token
+                    }
+                    showApp(username);
+                } else {
+                    let msg = 'Invalid credentials!';
+                    if (data && data.detail) {
+                        if (Array.isArray(data.detail) && data.detail[0]?.msg) msg = data.detail[0].msg;
+                        else if (typeof data.detail === 'string') msg = data.detail;
+                    } else if (text) {
+                        msg = text;
+                    }
+                    loginError.textContent = msg;
+                    loginError.style.display = 'block';
+                    setTimeout(() => { loginError.style.display = 'none'; }, 3000);
+                }
+            } catch (error) {
+                console.error('Error during login:', error);
+                loginError.textContent = 'Server not reachable!';
                 loginError.style.display = 'block';
-                setTimeout(() => {
-                    loginError.style.display = 'none';
-                }, 3000);
+                setTimeout(() => { loginError.style.display = 'none'; }, 3000);
             }
         });
 
+        // Change Password submission
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const oldPassword = (document.getElementById('oldPassword').value || '').trim();
+                const newPassword = (document.getElementById('newPassword').value || '').trim();
+                const confirmPassword = (document.getElementById('confirmPassword').value || '').trim();
+
+                if (!oldPassword || !newPassword) {
+                    changePwdError.textContent = 'Please fill out all fields';
+                    changePwdError.style.display = 'block';
+                    return;
+                }
+                if (newPassword.length < 8) {
+                    changePwdError.textContent = 'New password must be at least 8 characters';
+                    changePwdError.style.display = 'block';
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    changePwdError.textContent = 'New password and confirmation do not match';
+                    changePwdError.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    const token = localStorage.getItem('token');
+                    const resp = await fetch('/auth/change-password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                        },
+                        body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+                    });
+                    const ct = resp.headers.get('content-type') || '';
+                    const payload = ct.includes('application/json') ? await resp.json() : { detail: await resp.text() };
+                    if (resp.ok) {
+                        if (changePasswordModal) changePasswordModal.style.display = 'none';
+                        showToast('Password updated successfully');
+                    } else if (resp.status === 401) {
+                        localStorage.setItem('isLoggedIn', 'false');
+                        localStorage.removeItem('username');
+                        localStorage.removeItem('token');
+                        showLogin();
+                        showToast('Session expired. Please log in again.');
+                    } else {
+                        const msg = (payload && payload.detail) ? (typeof payload.detail === 'string' ? payload.detail : (payload.detail[0]?.msg || 'Failed to update password')) : 'Failed to update password';
+                        changePwdError.textContent = msg;
+                        changePwdError.style.display = 'block';
+                    }
+                } catch (err) {
+                    changePwdError.textContent = 'Network error. Please try again.';
+                    changePwdError.style.display = 'block';
+                }
+            });
+        }
+        // Email verification submit
+        if (verifyForm) {
+            verifyForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = (verifyEmail?.value || '').trim();
+                const code = (verifyCode?.value || '').trim();
+                if (!email || !code) {
+                    verifyError.textContent = 'Please enter email and verification code';
+                    verifyError.style.display = 'block';
+                    return;
+                }
+                try {
+                    const resp = await fetch('/auth/verify-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, code })
+                    });
+                    const ct = resp.headers.get('content-type') || '';
+                    const payload = ct.includes('application/json') ? await resp.json() : { detail: await resp.text() };
+                    if (resp.ok) {
+                        verifyError.style.color = '#27ae60';
+                        verifyError.textContent = 'Email verified! You can now sign in.';
+                        verifyError.style.display = 'block';
+                        setTimeout(() => { verifyError.style.display = 'none'; showSignin(); }, 1200);
+                    } else {
+                        const msg = (payload && payload.detail) ? (typeof payload.detail === 'string' ? payload.detail : (payload.detail[0]?.msg || 'Verification failed')) : 'Verification failed';
+                        verifyError.textContent = msg;
+                        verifyError.style.color = '#e74c3c';
+                        verifyError.style.display = 'block';
+                    }
+                } catch (err) {
+                    verifyError.textContent = 'Network error. Please try again.';
+                    verifyError.style.color = '#e74c3c';
+                    verifyError.style.display = 'block';
+                }
+            });
+        }
+
+        // Resend code link
+        if (resendCodeLink) {
+            let cooldown = false;
+            resendCodeLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (cooldown) return;
+                const email = (verifyEmail?.value || '').trim();
+                if (!email) {
+                    verifyError.textContent = 'Enter your email first';
+                    verifyError.style.color = '#e74c3c';
+                    verifyError.style.display = 'block';
+                    return;
+                }
+                try {
+                    const resp = await fetch('/auth/resend-code', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    const ct = resp.headers.get('content-type') || '';
+                    const payload = ct.includes('application/json') ? await resp.json() : { detail: await resp.text() };
+                    if (resp.ok) {
+                        showToast('Verification code sent');
+                        cooldown = true;
+                        resendCodeLink.style.pointerEvents = 'none';
+                        resendCodeLink.style.opacity = '0.6';
+                        setTimeout(() => {
+                            cooldown = false;
+                            resendCodeLink.style.pointerEvents = 'auto';
+                            resendCodeLink.style.opacity = '1';
+                        }, 60000);
+                    } else {
+                        const msg = (payload && payload.detail) ? (typeof payload.detail === 'string' ? payload.detail : (payload.detail[0]?.msg || 'Unable to resend code')) : 'Unable to resend code';
+                        verifyError.textContent = msg;
+                        verifyError.style.color = '#e74c3c';
+                        verifyError.style.display = 'block';
+                    }
+                } catch (err) {
+                    verifyError.textContent = 'Network error. Please try again.';
+                    verifyError.style.color = '#e74c3c';
+                    verifyError.style.display = 'block';
+                }
+            });
+        }
+        // Forgot Password submit -> request reset code
+        if (forgotPasswordForm) {
+            forgotPasswordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = (document.getElementById('resetEmail').value || '').trim();
+                if (!email || !email.includes('@')) {
+                    forgotPwdError.textContent = 'Please enter a valid email.';
+                    forgotPwdError.style.display = 'block';
+                    return;
+                }
+                try {
+                    const resp = await fetch('/auth/reset-request', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    // Hide request modal regardless of status (avoid enumeration)
+                    if (forgotPasswordModal) forgotPasswordModal.style.display = 'none';
+                    // Prefill email in confirm modal
+                    const email2 = document.getElementById('resetEmail2');
+                    if (email2) email2.value = email;
+                    if (resetConfirmModal) resetConfirmModal.style.display = 'flex';
+                    showToast('If an account exists, a reset code has been sent.');
+                } catch (err) {
+                    forgotPwdError.textContent = 'Network error. Please try again.';
+                    forgotPwdError.style.display = 'block';
+                }
+            });
+        }
+
+        // Cancel reset confirm
+        if (cancelResetConfirm) {
+            cancelResetConfirm.addEventListener('click', () => {
+                if (resetConfirmModal) resetConfirmModal.style.display = 'none';
+            });
+        }
+
+        // Reset confirm submit
+        if (resetConfirmForm) {
+            resetConfirmForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = (document.getElementById('resetEmail2').value || '').trim();
+                const code = (document.getElementById('resetCode').value || '').trim();
+                const newPassword = (document.getElementById('resetNewPassword').value || '').trim();
+                const confirmPassword = (document.getElementById('resetConfirmPassword').value || '').trim();
+                if (!email || !email.includes('@')) {
+                    resetConfirmError.textContent = 'Please enter a valid email.';
+                    resetConfirmError.style.display = 'block';
+                    return;
+                }
+                if (!code) {
+                    resetConfirmError.textContent = 'Please enter the reset code.';
+                    resetConfirmError.style.display = 'block';
+                    return;
+                }
+                if (newPassword.length < 8) {
+                    resetConfirmError.textContent = 'New password must be at least 8 characters.';
+                    resetConfirmError.style.display = 'block';
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    resetConfirmError.textContent = 'New password and confirmation do not match.';
+                    resetConfirmError.style.display = 'block';
+                    return;
+                }
+                try {
+                    const resp = await fetch('/auth/reset-confirm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, code, new_password: newPassword })
+                    });
+                    const ct = resp.headers.get('content-type') || '';
+                    const payload = ct.includes('application/json') ? await resp.json() : { detail: await resp.text() };
+                    if (resp.ok) {
+                        if (resetConfirmModal) resetConfirmModal.style.display = 'none';
+                        showToast('Password has been reset. You can sign in now.');
+                        showSignin();
+                    } else {
+                        const msg = (payload && payload.detail) ? (typeof payload.detail === 'string' ? payload.detail : (payload.detail[0]?.msg || 'Reset failed')) : 'Reset failed';
+                        resetConfirmError.textContent = msg;
+                        resetConfirmError.style.display = 'block';
+                    }
+                } catch (err) {
+                    resetConfirmError.textContent = 'Network error. Please try again.';
+                    resetConfirmError.style.display = 'block';
+                }
+            });
+        }
+        // Signup functionality
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('signupUsername').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value.trim();
+
+            // Basic client-side validation to avoid 422s
+            if (username.length < 3 || username.length > 50) {
+                signupError.textContent = 'Username must be 3-50 characters.';
+                signupError.style.color = '#e74c3c';
+                signupError.style.display = 'block';
+                setTimeout(() => { signupError.style.display = 'none'; }, 3000);
+                return;
+            }
+            if (password.length < 8 || password.length > 128) {
+                signupError.textContent = 'Password must be 8-128 characters.';
+                signupError.style.color = '#e74c3c';
+                signupError.style.display = 'block';
+                setTimeout(() => { signupError.style.display = 'none'; }, 3000);
+                return;
+            }
+            // Very light email check; backend validates strictly
+            if (!email.includes('@') || !email.includes('.')) {
+                signupError.textContent = 'Please enter a valid email address.';
+                signupError.style.color = '#e74c3c';
+                signupError.style.display = 'block';
+                setTimeout(() => { signupError.style.display = 'none'; }, 3000);
+                return;
+            }
+            try {
+                const response = await fetch('/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        password: password
+                    })
+                });
+                let data = null; let text = '';
+                try {
+                    const ct = response.headers.get('content-type') || '';
+                    if (ct.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        text = await response.text();
+                    }
+                } catch (err) {
+                    try { text = await response.text(); } catch { /* ignore */ }
+                }
+                if (response.ok) {
+                    // Switch to verification form, prefill email
+                    if (verifyEmail) verifyEmail.value = email;
+                    signupForm.style.display = 'none';
+                    if (verifyForm) verifyForm.style.display = 'flex';
+                    signupError.textContent = 'Signup successful! Please check your email for the verification code.';
+                    signupError.style.color = '#27ae60';
+                    signupError.style.display = 'block';
+                    setTimeout(() => { signupError.style.display = 'none'; }, 3000);
+                } else {
+                    let msg = 'Signup failed!';
+                    if (data && data.detail) {
+                        if (Array.isArray(data.detail)) {
+                            const first = data.detail[0];
+                            if (first && first.msg) msg = first.msg;
+                        } else if (typeof data.detail === 'string') {
+                            msg = data.detail;
+                        }
+                    } else if (text) {
+                        msg = text;
+                    }
+                    signupError.textContent = msg;
+                    signupError.style.color = '#e74c3c';
+                    signupError.style.display = 'block';
+                    setTimeout(() => { signupError.style.display = 'none'; }, 3000);
+                }
+            } catch (error) {
+                console.error('Error during signup:', error);
+                signupError.textContent = 'Server not reachable!';
+                signupError.style.color = '#e74c3c';
+                signupError.style.display = 'block';
+                setTimeout(() => { signupError.style.display = 'none'; }, 3000);
+            }
+        });
+
+        // Logout functionality
         logoutBtn.addEventListener('click', () => {
             localStorage.setItem('isLoggedIn', 'false');
             localStorage.removeItem('username');
+            localStorage.removeItem('token');
             showLogin();
         });
 
@@ -2908,14 +3514,23 @@
             loginPage.style.display = 'none';
             appContainer.style.display = 'flex';
             userName.textContent = `Welcome, ${username}`;
+            // Show chatbot FAB only after successful login
+            const fab = document.getElementById('chatbotFab');
+            if (fab) fab.style.display = 'flex';
         }
-
         function showLogin() {
             loginPage.style.display = 'flex';
             appContainer.style.display = 'none';
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
+            document.getElementById('signupUsername').value = '';
+            document.getElementById('signupEmail').value = '';
+            document.getElementById('signupPassword').value = '';
+            // Hide chatbot FAB on login/register screens
+            const fab = document.getElementById('chatbotFab');
+            if (fab) fab.style.display = 'none';
         }
+
 
         // Navigation functionality
         const navButtons = document.querySelectorAll('.nav-btn');
@@ -3225,10 +3840,13 @@
                 
                 try {
                     // Send data to backend
+                    const token = localStorage.getItem('token');
                     const response = await fetch('/predict', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                            
                         },
                         body: JSON.stringify(formData)
                     });
@@ -3928,10 +4546,12 @@
             
             try {
                 // Send message to backend
+                const token = localStorage.getItem('token');
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                     },
                     body: JSON.stringify({ message })
                 });
