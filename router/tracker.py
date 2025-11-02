@@ -14,7 +14,6 @@ tracker_router = APIRouter(prefix="/tracker", tags=["Tracker"])
 
 class FitnessLogIn(BaseModel):
     day: date = Field(..., description="Log date (YYYY-MM-DD)")
-    # General wellbeing
     sleep_hours: Optional[float] = None
     water_liters: Optional[float] = None
     exercise_minutes: Optional[int] = None
@@ -25,7 +24,6 @@ class FitnessLogIn(BaseModel):
     stress_level: Optional[int] = Field(None, ge=1, le=10)
     mood: Optional[str] = None
 
-    # Period/PCOS
     cramps: Optional[bool] = None
     flow_level: Optional[str] = Field(None, description="none|light|moderate|heavy")
     pain_level: Optional[int] = Field(None, ge=0, le=10)
@@ -34,8 +32,6 @@ class FitnessLogIn(BaseModel):
     headaches: Optional[bool] = None
     cravings: Optional[bool] = None
     fatigue: Optional[bool] = None
-
-    # Free-form
     notes: Optional[str] = None
     medications: Optional[List[str]] = None
     symptoms: Optional[List[str]] = None

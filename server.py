@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-# Load environment variables as early as possible so routers see them at import time
 load_dotenv()
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -86,14 +85,11 @@ def load_artifacts():
     if SCALER_PATH.exists():
         scaler = _load(SCALER_PATH)
 
-    # ensure media directory exists for serving PDFs
     media_dir = os.environ.get("MEDIA_DIR", os.path.join(os.getcwd(), "media"))
     os.makedirs(media_dir, exist_ok=True)
-    # Mount static files for media if not already mounted
     try:
         app.mount("/media", StaticFiles(directory=media_dir), name="media")
-    except Exception:
-        # already mounted
+    except Exception:\
         pass
 
 

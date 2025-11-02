@@ -26,7 +26,6 @@ from email.message import EmailMessage
 
 MEDIA_DIR = os.environ.get("MEDIA_DIR", os.path.join(os.getcwd(), "media"))
 CONSULT_DIR = os.path.join(MEDIA_DIR, "consults")
-# PUBLIC_BASE_URL no longer required for email flow
 SMTP_HOST = os.getenv("SMTP_HOST")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER")
@@ -57,7 +56,6 @@ def _generate_pdf(patient: dict, doctor: Optional[dict], inputs: dict, predictio
     fpath = os.path.join(CONSULT_DIR, filename)
 
     if A4 is None:
-        # Fallback: write a .txt with .pdf extension if reportlab is not installed
         with open(fpath, "w", encoding="utf-8") as f:
             f.write("OVACARE – Consultation Summary\n")
             f.write(f"Generated: {datetime.utcnow().isoformat()}Z\n\n")
@@ -76,7 +74,6 @@ def _generate_pdf(patient: dict, doctor: Optional[dict], inputs: dict, predictio
                 f.write(f" - {k}: {v}\n")
         return fpath
 
-    # Proper PDF via reportlab
     width, height = A4
     c = canvas.Canvas(fpath, pagesize=A4)
     x, y = 20*mm, height - 20*mm
@@ -120,15 +117,10 @@ def _generate_pdf(patient: dict, doctor: Optional[dict], inputs: dict, predictio
     c.save()
     return fpath
 
-
-# No public URL helper needed for email flow
-
-
 def _send_email(to_emails, subject: str, body: str, attachment_path: Optional[str] = None) -> dict:
     if not (SMTP_HOST and (SMTP_USER or SMTP_FROM)):
         return {"ok": False, "reason": "SMTP not configured"}
     try:
-        # normalize recipients into list
         if isinstance(to_emails, str):
             recipients = [to_emails]
         else:
@@ -140,7 +132,6 @@ def _send_email(to_emails, subject: str, body: str, attachment_path: Optional[st
         msg["From"] = SMTP_FROM
         msg["To"] = recipients[0]
         if len(recipients) > 1:
-            # place additional recipients in Bcc to avoid exposing addresses
             msg["Bcc"] = ", ".join(recipients[1:])
         msg.set_content(body)
         if attachment_path and os.path.exists(attachment_path):
@@ -166,7 +157,6 @@ def _is_placeholder_email(email: Optional[str]) -> bool:
 
 @router.get("/cities")
 def get_cities(db: Session = Depends(get_db)):
-    # Seed a few doctors if none exist (dev convenience)
     if db.query(Doctor).count() == 0:
         db.add_all([
             Doctor(name="Dr. Lakshay Jain", city="Delhi", specialty="Gynecologist", email="lakshayj539@example.com"),
@@ -223,10 +213,6 @@ async def set_doctor_email(req: Request, db: Session = Depends(get_db), user=Dep
     db.commit()
     return {"id": doctor.id, "name": doctor.name, "city": doctor.city, "email": doctor.email}
 
-
-# Removed /doctor/preview endpoint (no longer used)
-
-
 @router.post("/consult")
 async def consult(req: Request, db: Session = Depends(get_db), user=Depends(get_current_user)):
     payload = await req.json()
@@ -240,7 +226,6 @@ async def consult(req: Request, db: Session = Depends(get_db), user=Depends(get_
 
     doctor = db.query(Doctor).get(doctor_id) if doctor_id else None
 
-    # Always generate a final PDF named with the patient (real) name or username
     uname = None
     try:
         uname = getattr(user, 'username', None)
@@ -252,7 +237,6 @@ async def consult(req: Request, db: Session = Depends(get_db), user=Depends(get_
     name_hint = patient.get('name') or uname
     pdf_path = _generate_pdf(patient, vars(doctor) if doctor else {}, inputs, prediction, filename_hint=name_hint)
 
-    # Persist request
     cr = ConsultRequest(
         user_id=getattr(user, 'id', None) if user else None,
         doctor_id=doctor.id if doctor else None,
@@ -292,7 +276,7 @@ async def consult(req: Request, db: Session = Depends(get_db), user=Depends(get_
         db.add(cr)
         db.commit()
     else:
-        cr.status = "queued"  # no recipient available
+        cr.status = "queued"  
         db.add(cr)
         db.commit()
 
