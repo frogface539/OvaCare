@@ -4,12 +4,11 @@ from typing import Generator
 from sqlalchemy import Column, Integer, String, Date, DateTime, Boolean, ForeignKey, Float, Text, create_engine, UniqueConstraint
 from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship
 
-# SQLite database in project root
 SQLALCHEMY_DATABASE_URL = "sqlite:///./app.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},  # needed for SQLite with threads
+    connect_args={"check_same_thread": False},  
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -86,13 +85,13 @@ class FitnessLog(Base):
     calories_in = Column(Integer, nullable=True)
     calories_out = Column(Integer, nullable=True)
     weight_kg = Column(Float, nullable=True)
-    stress_level = Column(Integer, nullable=True)  # 1-10
-    mood = Column(String(32), nullable=True)  # e.g., calm, moody, anxious, energetic
+    stress_level = Column(Integer, nullable=True) 
+    mood = Column(String(32), nullable=True)  
 
     # Period/PCOS related
     cramps = Column(Boolean, default=False, nullable=False)
-    flow_level = Column(String(16), nullable=True)  # none/light/moderate/heavy
-    pain_level = Column(Integer, nullable=True)  # 0-10
+    flow_level = Column(String(16), nullable=True) 
+    pain_level = Column(Integer, nullable=True)  
     acne = Column(Boolean, default=False, nullable=False)
     bloating = Column(Boolean, default=False, nullable=False)
     headaches = Column(Boolean, default=False, nullable=False)
@@ -101,8 +100,8 @@ class FitnessLog(Base):
 
     # Free-form
     notes = Column(Text, nullable=True)
-    medications_json = Column(Text, nullable=True)  # JSON-encoded list[str]
-    symptoms_json = Column(Text, nullable=True)     # JSON-encoded list[str]
+    medications_json = Column(Text, nullable=True)  
+    symptoms_json = Column(Text, nullable=True)     
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)

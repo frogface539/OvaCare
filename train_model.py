@@ -8,12 +8,9 @@ import joblib
 import matplotlib.pyplot as plt
 import os
 
-# 1. Load data
 df = pd.read_csv("data.csv")
 df.columns = df.columns.str.strip()
 
-# --- Fix for missing/invalid target values ---
-# Show unique values to debug
 print("Unique PCOS (Y/N) values before mapping:", df['PCOS (Y/N)'].unique())
 df['PCOS'] = df['PCOS (Y/N)'].map({'Y': 1, 'N': 0})
 print("Rows before dropping NaN PCOS:", len(df))
@@ -32,20 +29,17 @@ num_cols = [
     "Stress Level (1-10)", "Water Intake (liters/day)", "Fast Food (meals/week)", "Coffee/Tea (cups/day)"
 ]
 
-# Fill missing categorical values with mode, numericals with median
 for col in cat_cols:
     df[col] = df[col].fillna(df[col].mode()[0])
 for col in num_cols:
     df[col] = df[col].fillna(df[col].median())
 
-# Encode categoricals
 encoders = {}
 for col in cat_cols:
     le = LabelEncoder()
     df[col] = le.fit_transform(df[col].astype(str))
     encoders[col] = le
 
-# Scale numerics
 scaler = StandardScaler()
 df[num_cols] = scaler.fit_transform(df[num_cols])
 
@@ -53,21 +47,17 @@ features = num_cols + cat_cols
 X = df[features]
 y = df["PCOS"]
 
-# 3. Train/test split
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
 
-# 4. Model training
 model = RandomForestClassifier(n_estimators=250, class_weight="balanced", random_state=42)
 model.fit(X_train, y_train)
 
-# 5. Evaluation
 y_pred = model.predict(X_test)
 y_proba = model.predict_proba(X_test)[:, 1]
 print("Accuracy:", accuracy_score(y_test, y_pred))
 print("ROC AUC:", roc_auc_score(y_test, y_proba))
 print(classification_report(y_test, y_pred))
 
-# 6. Save artifacts
 os.makedirs("models", exist_ok=True)
 joblib.dump(model, "models/model.pkl")
 joblib.dump(encoders, "models/encoders.pkl")
@@ -75,7 +65,6 @@ joblib.dump(features, "models/feature_names.pkl")
 joblib.dump(scaler, "models/scaler.pkl")
 print("Saved model, encoders, feature_names, scaler to /models.")
 
-# 7. Global Feature Importance Plot
 importances = model.feature_importances_
 indices = np.argsort(importances)[::-1]
 plt.figure(figsize=(10,6))
@@ -87,7 +76,6 @@ plt.gca().invert_yaxis()
 plt.savefig("models/global_feature_importances.png", dpi=150)
 plt.show()
 
-# 8. Per-user deviation plot (example for first test user)
 input_row = X_test.iloc[0]
 mean_row = pd.Series(X_train.mean(), index=features)
 diff = (input_row - mean_row).abs().sort_values(ascending=False)
