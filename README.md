@@ -220,8 +220,7 @@ Please follow a simple PR workflow and include tests for code changes.
 
 ## 📞 Contact
 
-Project maintained by: Your Team  
-For questions or help: open an issue or contact the project lead.
+Project maintained by: Lakshay Jain, Palak
 
 ---
 
